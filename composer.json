@@ -1,0 +1,22 @@
+{
+    "name": "pendalf89/yii2-image-resizer",
+    "description": "Yii2 image resizer",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "PendalF",
+            "email": "pendalf@mail.ru"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable" : true,
+    "require": {
+        "yiisoft/yii2": "*",
+        "yiisoft/yii2-imagine": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "pendalf89\\imageresizer\\": ""
+        }
+    }
+}
