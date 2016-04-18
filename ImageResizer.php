@@ -21,9 +21,9 @@ class ImageResizer extends Component
 	 * @var array image sizes
 	 * For example:
 	 *  [
-	 *		['width' => 300, 'height' => 200],
-	 *		['width' => 300, 'height' => 100],
-	 *	]
+	 *        ['width' => 300, 'height' => 200],
+	 *        ['width' => 300, 'height' => 100],
+	 *    ]
 	 */
 	public $sizes;
 
@@ -43,6 +43,12 @@ class ImageResizer extends Component
 	public $enableRewrite = false;
 
 	/**
+	 * @var bool enable to delete all images, which sizes not in $this->sizes array.
+	 * If true, all thumbs for image will be deleted before resize.
+	 */
+	public $deleteNonActualSizes = false;
+
+	/**
 	 * @var array|string the driver to use. This can be either a single driver name or an array of driver names.
 	 * If the latter, the first available driver will be used.
 	 *
@@ -57,21 +63,20 @@ class ImageResizer extends Component
 	public $mode = ManipulatorInterface::THUMBNAIL_OUTBOUND;
 
 	/**
-	 * @var bool enable to delete all images, which sizes not in $this->sizes array
+	 * @inheritdoc
 	 */
-	public $deleteNonActualSizes = true;
+	public function init()
+	{
+		parent::init();
+		$this->setPostfixesToSizes();
+	}
 
 	/**
-	 * Run image resizing.
+	 * Resize and save thumbnails from all images.
 	 */
-	public function run()
+	public function resizeAll()
 	{
-		$this->setSizesPostfixes();
 		$filenames = $this->collectFilenames();
-
-		if ($this->deleteNonActualSizes) {
-			$this->cleanDirectory($filenames);
-		}
 
 		foreach ($filenames as $filename) {
 			if ($this->isOriginal($filename)) {
@@ -81,14 +86,18 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Resize and save new images.
-	 * If rewrite disabled and filename already exists, than skip.
+	 * Resize image and save thumbnails.
+	 * If rewrite disabled and thumbnail already exists, than skip.
 	 *
 	 * @param string $filename image filename
 	 */
-	protected function resize($filename)
+	public function resize($filename)
 	{
 		Image::$driver = $this->driver;
+
+		if ($this->deleteNonActualSizes) {
+			$this->deleteFiles($this->getThumbs($filename));
+		}
 
 		foreach ($this->sizes as $size) {
 			$newFilename = $this->addPostfix($filename, $size['postfix']);
@@ -102,6 +111,35 @@ class ImageResizer extends Component
 	}
 
 	/**
+	 * Search all thumbs by original image filename
+	 *
+	 * @param string $original original image filename
+	 *
+	 * @return array
+	 */
+	public function getThumbs($original)
+	{
+		$originalPathinfo = pathinfo($original);
+		$filenames        = scandir($originalPathinfo['dirname']);
+		$thumbs           = [];
+
+		foreach ($filenames as $filename) {
+			$filename        = "$originalPathinfo[dirname]/$filename";
+			$currentPathinfo = pathinfo($filename);
+
+			if ($currentPathinfo['filename'] === $originalPathinfo['filename']) {
+				continue;
+			}
+
+			if (mb_substr_count($currentPathinfo['filename'], $originalPathinfo['filename'], Yii::$app->charset)) {
+				$thumbs[] = $filename;
+			}
+		}
+
+		return $thumbs;
+	}
+
+	/**
 	 * Add postfix to filename
 	 *
 	 * @param string $filename
@@ -112,6 +150,7 @@ class ImageResizer extends Component
 	protected function addPostfix($filename, $postfix)
 	{
 		$pathinfo = pathinfo($filename);
+
 		return "$pathinfo[dirname]/$pathinfo[filename]$postfix.$pathinfo[extension]";
 	}
 
@@ -122,7 +161,7 @@ class ImageResizer extends Component
 	 */
 	protected function collectFilenames()
 	{
-		$dir = $this->getDirectory();
+		$dir       = $this->getDirectory();
 		$filenames = [];
 
 		if ($this->recursively) {
@@ -161,7 +200,7 @@ class ImageResizer extends Component
 	/**
 	 * Set postfixes to sizes array
 	 */
-	protected function setSizesPostfixes()
+	protected function setPostfixesToSizes()
 	{
 		foreach ($this->sizes as $key => $size) {
 			$this->sizes[$key]['postfix'] = "-$size[width]x$size[height]";
@@ -179,16 +218,14 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Delete all non-original images.
+	 * Delete files.
 	 *
 	 * @param array $filenames
 	 */
-	protected function cleanDirectory($filenames)
+	protected function deleteFiles($filenames)
 	{
 		foreach ($filenames as $filename) {
-			if (!$this->isOriginal($filename)) {
-				unlink($filename);
-			}
+			unlink($filename);
 		}
 	}
 }

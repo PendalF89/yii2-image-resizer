@@ -53,5 +53,10 @@ Usage
 ------------
 
 ```php
-Yii::$app->imageResizer->run();
+// resize all images.
+Yii::$app->imageResizer->resizeAll();
+// resize one image.
+Yii::$app->imageResizer->resize('path/to/original/image.png');
+// returns thumbs filenames from original image.
+Yii::$app->imageResizer->getThumbs('path/to/original/image.png');
 ```
