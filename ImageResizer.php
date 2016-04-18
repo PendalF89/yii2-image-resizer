@@ -60,16 +60,7 @@ class ImageResizer extends Component
 	 * @var string image creation mode.
 	 * For more information see Imagine\Image\ManipulatorInterface
 	 */
-	public $mode = ManipulatorInterface::THUMBNAIL_OUTBOUND;
-
-	/**
-	 * @inheritdoc
-	 */
-	public function init()
-	{
-		parent::init();
-		$this->setPostfixesToSizes();
-	}
+	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
 
 	/**
 	 * Resize and save thumbnails from all images.
@@ -100,7 +91,7 @@ class ImageResizer extends Component
 		}
 
 		foreach ($this->sizes as $size) {
-			$newFilename = $this->addPostfix($filename, $size['postfix']);
+			$newFilename = $this->addPostfix($filename, $this->getPostfixBySize($size));
 
 			if (!$this->enableRewrite && file_exists($newFilename)) {
 				continue;
@@ -198,13 +189,14 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Set postfixes to sizes array
+	 * Get postfix by size array
+	 * @param array $size
+	 *
+	 * @return string
 	 */
-	protected function setPostfixesToSizes()
+	protected function getPostfixBySize($size)
 	{
-		foreach ($this->sizes as $key => $size) {
-			$this->sizes[$key]['postfix'] = "-$size[width]x$size[height]";
-		}
+		return "-$size[width]x$size[height]";
 	}
 
 	/**
