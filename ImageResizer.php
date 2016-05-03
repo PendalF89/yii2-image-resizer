@@ -63,6 +63,17 @@ class ImageResizer extends Component
 	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
 
 	/**
+	 * Create work directory, if it not exists.
+	 */
+	public function init()
+	{
+		$dir = $this->getDirectory();
+		if (!is_null($dir) && !is_dir($dir)) {
+			$this->createDirectory();
+		}
+	}
+
+	/**
 	 * Resize and save thumbnails from all images.
 	 */
 	public function resizeAll()
@@ -229,7 +240,17 @@ class ImageResizer extends Component
 	protected function deleteFiles($filenames)
 	{
 		foreach ($filenames as $filename) {
-			unlink($filename);
+			if (file_exists($filename) && !is_dir($filename)) {
+				unlink($filename);
+			}
 		}
+	}
+
+	/**
+	 * Create directory from $this->dir property
+	 */
+	protected function createDirectory()
+	{
+		mkdir($this->getDirectory(), 0755, true);
 	}
 }
