@@ -131,6 +131,18 @@ class ImageResizer extends Component
 	}
 
 	/**
+	 * Delete original image with filenames
+	 *
+	 * @param string $original original image filename
+	 */
+	public function deleteWithThumbs($original)
+	{
+		$filenames = $this->getThumbs($original);
+		$filenames[] = $original;
+		$this->deleteFiles($filenames);
+	}
+
+	/**
 	 * Add postfix to filename
 	 *
 	 * @param string $filename
