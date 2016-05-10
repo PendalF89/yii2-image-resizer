@@ -40,7 +40,7 @@ class ImageResizer extends Component
 	/**
 	 * @var bool enable rewrite thumbs if its already exists
 	 */
-	public $enableRewrite = false;
+	public $enableRewrite = true;
 
 	/**
 	 * @var bool enable to delete all images, which sizes not in $this->sizes array.
