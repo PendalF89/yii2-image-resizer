@@ -60,7 +60,7 @@ class ImageResizer extends Component
 	 * @var string image creation mode.
 	 * For more information see Imagine\Image\ManipulatorInterface
 	 */
-	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
+	public $mode = ManipulatorInterface::THUMBNAIL_OUTBOUND;
 
 	/**
 	 * Create work directory, if it not exists.
