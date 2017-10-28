@@ -1,14 +1,10 @@
 <?php
-
 namespace pendalf89\imageresizer;
-
 use Imagine\Image\ManipulatorInterface;
 use Yii;
 use yii\base\Component;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use yii\imagine\Image;
-
 /**
  * Class ImageResizer
  * Class for creation thumbs from original image.
@@ -29,28 +25,23 @@ class ImageResizer extends Component
 	 * If 'suffix' not set, than width and height be used for suffix name.
 	 */
 	public $sizes;
-
 	/**
 	 * @var string directory with images
 	 */
 	public $dir;
-
 	/**
 	 * @var bool handle directory recursively
 	 */
 	public $recursively = true;
-
 	/**
 	 * @var bool enable rewrite thumbs if its already exists
 	 */
 	public $enableRewrite = true;
-
 	/**
 	 * @var bool enable to delete all images, which sizes not in $this->sizes array.
 	 * If true, all thumbs for image will be deleted before resize.
 	 */
 	public $deleteNonActualSizes = false;
-
 	/**
 	 * @var array|string the driver to use. This can be either a single driver name or an array of driver names.
 	 * If the latter, the first available driver will be used.
@@ -58,20 +49,21 @@ class ImageResizer extends Component
 	 * For more information see yii\imagine\BaseImage
 	 */
 	public $driver = [Image::DRIVER_GMAGICK, Image::DRIVER_IMAGICK, Image::DRIVER_GD2];
-
 	/**
 	 * @var string image creation mode.
 	 * For more information see Imagine\Image\ManipulatorInterface
 	 * Available values: inset, outset
 	 */
 	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
-
 	/**
 	 * @var string background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
 	 * mode with both width and height specified. Default is solid.
 	 */
 	public $thumbnailBackgroundAlpha = 0;
-
+	/**
+	 * @var bool whether add thumbnail box if source image less than thumbnail size.
+	 */
+	public $addBox = true;
 	/**
 	 * Create work directory, if it not exists.
 	 */
@@ -82,21 +74,18 @@ class ImageResizer extends Component
 			$this->createDirectory();
 		}
 	}
-
 	/**
 	 * Resize and save thumbnails from all images.
 	 */
 	public function resizeAll()
 	{
 		$filenames = $this->collectFilenames();
-
 		foreach ($filenames as $filename) {
 			if ($this->isOriginal($filename)) {
 				$this->resize($filename);
 			}
 		}
 	}
-
 	/**
 	 * Resize image and save thumbnails.
 	 * If rewrite disabled and thumbnail already exists, than skip.
@@ -106,23 +95,18 @@ class ImageResizer extends Component
 	public function resize($filename)
 	{
 		Image::$driver = $this->driver;
-
 		if ($this->deleteNonActualSizes) {
 			$this->deleteFiles($this->getThumbs($filename));
 		}
-
 		foreach ($this->sizes as $size) {
 			$newFilename = $this->addSuffix($filename, $this->getSuffixBySize($size));
-
 			if (!$this->enableRewrite && file_exists($newFilename)) {
 				continue;
 			}
-
 			Image::$thumbnailBackgroundAlpha = $this->thumbnailBackgroundAlpha;
-			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode)->save($newFilename);
+			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode, $this->addBox)->save($newFilename);
 		}
 	}
-
 	/**
 	 * Search all thumbs by original image filename
 	 *
@@ -135,23 +119,18 @@ class ImageResizer extends Component
 		$originalPathinfo = pathinfo($original);
 		$filenames        = scandir($originalPathinfo['dirname']);
 		$thumbs           = [];
-
 		foreach ($filenames as $filename) {
 			$filename        = "$originalPathinfo[dirname]/$filename";
 			$currentPathinfo = pathinfo($filename);
-
 			if ($currentPathinfo['filename'] === $originalPathinfo['filename']) {
 				continue;
 			}
-
 			if (strpos($currentPathinfo['filename'], $originalPathinfo['filename']) === 0) {
 				$thumbs[] = $filename;
 			}
 		}
-
 		return $thumbs;
 	}
-
 	/**
 	 * Delete original image with thumbs
 	 *
@@ -163,7 +142,6 @@ class ImageResizer extends Component
 		$filenames[] = $original;
 		$this->deleteFiles($filenames);
 	}
-
 	/**
 	 * Add suffix to filename
 	 *
@@ -175,10 +153,8 @@ class ImageResizer extends Component
 	protected function addSuffix($filename, $suffix)
 	{
 		$pathinfo = pathinfo($filename);
-
 		return "$pathinfo[dirname]/$pathinfo[filename]$suffix.$pathinfo[extension]";
 	}
-
 	/**
 	 * Collect images filenames from dir
 	 *
@@ -188,7 +164,6 @@ class ImageResizer extends Component
 	{
 		$dir       = $this->getDirectory();
 		$filenames = [];
-
 		if ($this->recursively) {
 			foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir)) as $file) {
 				if (!$file->isDir()) {
@@ -206,10 +181,8 @@ class ImageResizer extends Component
 				}
 			}
 		}
-
 		return $filenames;
 	}
-
 	/**
 	 * If filename doesn`t match mask "-123x123.", than this original filename.
 	 *
@@ -222,16 +195,13 @@ class ImageResizer extends Component
 		if (preg_match('/-\d+x\d+\./u', $filename)) {
 			return false;
 		}
-
 		foreach ($this->sizes as $size) {
 			if (isset($size['suffix']) && preg_match("/-$size[suffix]\./u", $filename)) {
 				return false;
 			}
 		}
-
 		return true;
 	}
-
 	/**
 	 * Get suffix by size array
 	 * @param array $size
@@ -243,10 +213,8 @@ class ImageResizer extends Component
 		if (isset($size['suffix'])) {
 			return "-$size[suffix]";
 		}
-
 		return "-$size[width]x$size[height]";
 	}
-
 	/**
 	 * Returns work directory with images
 	 *
@@ -256,7 +224,6 @@ class ImageResizer extends Component
 	{
 		return Yii::getAlias($this->dir);
 	}
-
 	/**
 	 * Delete files.
 	 *
@@ -270,7 +237,6 @@ class ImageResizer extends Component
 			}
 		}
 	}
-
 	/**
 	 * Create directory from $this->dir property
 	 */
