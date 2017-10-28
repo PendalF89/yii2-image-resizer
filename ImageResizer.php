@@ -25,7 +25,7 @@ class ImageResizer extends Component
 	 *        ['width' => 300, 'height' => 100, 'suffix' => 'sm'],
 	 *        ['width' => 200, 'height' => 50],
 	 *    ]
-	 * 
+	 *
 	 * If 'suffix' not set, than width and height be used for suffix name.
 	 */
 	public $sizes;
@@ -118,7 +118,7 @@ class ImageResizer extends Component
 				continue;
 			}
 
-			Image::$thumbnailBackgroundAlpha = 0;
+			Image::$thumbnailBackgroundAlpha = $this->thumbnailBackgroundAlpha;
 			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode)->save($newFilename);
 		}
 	}
