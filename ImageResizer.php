@@ -21,9 +21,12 @@ class ImageResizer extends Component
 	 * @var array image sizes
 	 * For example:
 	 *  [
-	 *        ['width' => 300, 'height' => 200],
-	 *        ['width' => 300, 'height' => 100],
+	 *        ['width' => 300, 'height' => 200, 'suffix' => 'md'],
+	 *        ['width' => 300, 'height' => 100, 'suffix' => 'sm'],
+	 *        ['width' => 200, 'height' => 50],
 	 *    ]
+	 * 
+	 * If 'suffix' not set, than width and height be used for suffix name.
 	 */
 	public $sizes;
 
@@ -59,8 +62,15 @@ class ImageResizer extends Component
 	/**
 	 * @var string image creation mode.
 	 * For more information see Imagine\Image\ManipulatorInterface
+	 * Available values: inset, outset
 	 */
-	public $mode = ManipulatorInterface::THUMBNAIL_OUTBOUND;
+	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
+
+	/**
+	 * @var string background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
+	 * mode with both width and height specified. Default is solid.
+	 */
+	public $thumbnailBackgroundAlpha = 0;
 
 	/**
 	 * Create work directory, if it not exists.
@@ -102,12 +112,13 @@ class ImageResizer extends Component
 		}
 
 		foreach ($this->sizes as $size) {
-			$newFilename = $this->addPostfix($filename, $this->getPostfixBySize($size));
+			$newFilename = $this->addSuffix($filename, $this->getSuffixBySize($size));
 
 			if (!$this->enableRewrite && file_exists($newFilename)) {
 				continue;
 			}
 
+			Image::$thumbnailBackgroundAlpha = 0;
 			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode)->save($newFilename);
 		}
 	}
@@ -133,7 +144,7 @@ class ImageResizer extends Component
 				continue;
 			}
 
-			if (mb_substr_count($currentPathinfo['filename'], $originalPathinfo['filename'], Yii::$app->charset)) {
+			if (strpos($currentPathinfo['filename'], $originalPathinfo['filename']) === 0) {
 				$thumbs[] = $filename;
 			}
 		}
@@ -142,7 +153,7 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Delete original image with filenames
+	 * Delete original image with thumbs
 	 *
 	 * @param string $original original image filename
 	 */
@@ -154,18 +165,18 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Add postfix to filename
+	 * Add suffix to filename
 	 *
 	 * @param string $filename
-	 * @param string $postfix
+	 * @param string $suffix
 	 *
 	 * @return string
 	 */
-	protected function addPostfix($filename, $postfix)
+	protected function addSuffix($filename, $suffix)
 	{
 		$pathinfo = pathinfo($filename);
 
-		return "$pathinfo[dirname]/$pathinfo[filename]$postfix.$pathinfo[extension]";
+		return "$pathinfo[dirname]/$pathinfo[filename]$suffix.$pathinfo[extension]";
 	}
 
 	/**
@@ -208,17 +219,31 @@ class ImageResizer extends Component
 	 */
 	protected function isOriginal($filename)
 	{
-		return !(boolean) preg_match('/-\d+x\d+\./u', $filename);
+		if (preg_match('/-\d+x\d+\./u', $filename)) {
+			return false;
+		}
+
+		foreach ($this->sizes as $size) {
+			if (isset($size['suffix']) && preg_match("/-$size[suffix]\./u", $filename)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
-	 * Get postfix by size array
+	 * Get suffix by size array
 	 * @param array $size
 	 *
 	 * @return string
 	 */
-	protected function getPostfixBySize($size)
+	protected function getSuffixBySize($size)
 	{
+		if (isset($size['suffix'])) {
+			return "-$size[suffix]";
+		}
+
 		return "-$size[width]x$size[height]";
 	}
 
