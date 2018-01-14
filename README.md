@@ -33,7 +33,14 @@ Configuration:
         'sizes'                => [
            ['width' => 800, 'height' => null, 'suffix' => 'lg'], // in this case height will be calculated automatically
 	   ['width' => 300, 'height' => 200, 'suffix' => 'md'],
-	   ['width' => 300, 'height' => 100, 'suffix' => 'sm', 'mode' => 'inset', 'thumbnailBackgroundAlpha' => 0, 'fixedSize' => true],
+	   [
+		'width'                    => 300,
+		'height'                   => 100,
+		'suffix'                   => 'sm',
+		'mode'                     => 'inset',
+		'thumbnailBackgroundAlpha' => 0,
+		'fixedSize'                => true
+	   ],
 	   ['width' => 200, 'height' => 50], // without suffix. Not recommended.
         ],
         // handle directory recursively
