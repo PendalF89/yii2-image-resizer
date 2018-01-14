@@ -22,10 +22,10 @@ class ImageResizer extends Component
 	 * @var array image sizes
 	 * For example:
 	 *  [
-	 *        ['width' => 300, 'height' => 200, 'suffix' => 'md'],
-	 *        ['width' => 300, 'height' => 100, 'suffix' => 'sm'],
-	 *        ['width' => 200, 'height' => 50],
-	 *    ]
+	 *    ['width' => 300, 'height' => 200, 'suffix' => 'md'],
+	 *    ['width' => 300, 'height' => 100, 'suffix' => 'sm', 'mode' => 'inset', 'thumbnailBackgroundAlpha' => 0, 'fixedSize' => true],
+	 *    ['width' => 200, 'height' => 50],
+	 *  ]
 	 *
 	 * If 'suffix' not set, than width and height be used for suffix name.
 	 */
@@ -70,19 +70,18 @@ class ImageResizer extends Component
 	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
 
 	/**
-	 * @var string background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
-	 * mode with both width and height specified.
-	 * "0" - white background;
-	 * "100" - transparent background.
+	 * @var string background transparency to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`.
+	 * If "true", background will be transparent, if "false", will be white color.
+	 * Note, than jpeg images not support transparent background.
 	 */
-	public $thumbnailBackgroundAlpha = 0;
+	public $bgTransparent = false;
 
 	/**
 	 * @var bool want you to get thumbs of a fixed size or not. Has no effect, if $mode set "outbound".
 	 *
 	 * If "true" then thumbs will be the exact same size as in the $sizes array.
 	 * The background will be filled with white color.
-	 * Background transparency is controlled by the parameter $thumbnailBackgroundAlpha.
+	 * Background transparency is controlled by the parameter $bgTransparent.
 	 *
 	 * If "false", then thumbs will have a proportional size. If the size of the thumbs larger than the original image,
 	 * the thumbs will be the size of the original image.
@@ -124,8 +123,7 @@ class ImageResizer extends Component
 		if (!self::isImage($filename)) {
 			return;
 		}
-		Image::$driver                   = $this->driver;
-		Image::$thumbnailBackgroundAlpha = $this->thumbnailBackgroundAlpha;
+		Image::$driver = $this->driver;
 		if ($this->deleteNonActualSizes) {
 			$this->deleteFiles($this->getThumbs($filename));
 		}
@@ -134,10 +132,16 @@ class ImageResizer extends Component
 			if (!$this->enableRewrite && file_exists($newFilename)) {
 				continue;
 			}
-			if ($this->fixedSize) {
-				Image::thumbnail($filename, $size['width'], $size['height'], $this->mode, true)->save($newFilename);
+
+			$bgTransparent = isset($size['bgTransparent']) ? $size['bgTransparent'] : $this->bgTransparent;
+			$mode          = isset($size['mode']) ? $size['mode'] : $this->mode;
+			$fixedSize     = isset($size['fixedSize']) ? $size['fixedSize'] : $this->fixedSize;
+
+			Image::$thumbnailBackgroundAlpha = self::getThumbnailBackgroundAlphaValue($filename, $bgTransparent);
+			if ($fixedSize) {
+				Image::thumbnail($filename, $size['width'], $size['height'], $mode, true)->save($newFilename);
 			} else {
-				Image::getImagine()->open($filename)->thumbnail(new Box($size['width'], $size['height']), $this->mode)->save($newFilename);
+				Image::getImagine()->open($filename)->thumbnail(new Box($size['width'], $size['height']), $mode)->save($newFilename);
 			}
 		}
 	}
@@ -305,5 +309,28 @@ class ImageResizer extends Component
 	protected static function isImage($filename)
 	{
 		return strpos(FileHelper::getMimeType($filename), 'image/') !== false;
+	}
+
+	/**
+	 * Returns transparency integer value depending on $bgTransparent value and $filename mime type.
+	 *
+	 * @param string $filename
+	 * @param bool $bgTransparent
+	 *
+	 * @return int transparency
+	 * @throws \yii\base\InvalidConfigException
+	 */
+	protected static function getThumbnailBackgroundAlphaValue($filename, $bgTransparent)
+	{
+		// for gif images
+		$minTransparent = 0;
+		$maxTransparent = 100;
+		// inverse values for png images
+		if (strpos(FileHelper::getMimeType($filename), '/png') !== false) {
+			$minTransparent = 100;
+			$maxTransparent = 0;
+		}
+
+		return $bgTransparent ? $maxTransparent : $minTransparent;
 	}
 }
