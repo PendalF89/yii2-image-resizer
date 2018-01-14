@@ -5,6 +5,7 @@ namespace pendalf89\imageresizer;
 use Yii;
 use yii\base\Component;
 use yii\helpers\FileHelper;
+use Imagine\Image\Box;
 use Imagine\Image\ManipulatorInterface;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
@@ -29,23 +30,28 @@ class ImageResizer extends Component
 	 * If 'suffix' not set, than width and height be used for suffix name.
 	 */
 	public $sizes;
+
 	/**
 	 * @var string directory with images
 	 */
 	public $dir;
+
 	/**
 	 * @var bool handle directory recursively
 	 */
 	public $recursively = true;
+
 	/**
 	 * @var bool enable rewrite thumbs if its already exists
 	 */
 	public $enableRewrite = true;
+
 	/**
 	 * @var bool enable to delete all images, which sizes not in $this->sizes array.
 	 * If true, all thumbs for image will be deleted before resize.
 	 */
 	public $deleteNonActualSizes = false;
+
 	/**
 	 * @var array|string the driver to use. This can be either a single driver name or an array of driver names.
 	 * If the latter, the first available driver will be used.
@@ -53,21 +59,35 @@ class ImageResizer extends Component
 	 * For more information see yii\imagine\BaseImage
 	 */
 	public $driver = [Image::DRIVER_GMAGICK, Image::DRIVER_IMAGICK, Image::DRIVER_GD2];
+
 	/**
 	 * @var string image creation mode.
 	 * For more information see Imagine\Image\ManipulatorInterface
-	 * Available values: inset, outbound
+	 * Available values:
+	 * "inset" - thumb will not be truncated;
+	 * "outbound" - thumb will be truncated.
 	 */
 	public $mode = ManipulatorInterface::THUMBNAIL_INSET;
+
 	/**
 	 * @var string background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
-	 * mode with both width and height specified. Default is solid.
+	 * mode with both width and height specified.
+	 * "0" - white background;
+	 * "100" - transparent background.
 	 */
 	public $thumbnailBackgroundAlpha = 0;
+
 	/**
-	 * @var bool whether add thumbnail box if source image less than thumbnail size.
+	 * @var bool want you to get thumbs of a fixed size or not. Has no effect, if $mode set "outbound".
+	 *
+	 * If "true" then thumbs will be the exact same size as in the $sizes array.
+	 * The background will be filled with white color.
+	 * Background transparency is controlled by the parameter $thumbnailBackgroundAlpha.
+	 *
+	 * If "false", then thumbs will have a proportional size. If the size of the thumbs larger than the original image,
+	 * the thumbs will be the size of the original image.
 	 */
-	public $addBox = true;
+	public $fixedSize = true;
 
 	/**
 	 * Create work directory, if it not exists.
@@ -104,7 +124,8 @@ class ImageResizer extends Component
 		if (!self::isImage($filename)) {
 			return;
 		}
-		Image::$driver = $this->driver;
+		Image::$driver                   = $this->driver;
+		Image::$thumbnailBackgroundAlpha = $this->thumbnailBackgroundAlpha;
 		if ($this->deleteNonActualSizes) {
 			$this->deleteFiles($this->getThumbs($filename));
 		}
@@ -113,8 +134,11 @@ class ImageResizer extends Component
 			if (!$this->enableRewrite && file_exists($newFilename)) {
 				continue;
 			}
-			Image::$thumbnailBackgroundAlpha = $this->thumbnailBackgroundAlpha;
-			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode, $this->addBox)->save($newFilename);
+			if ($this->fixedSize) {
+				Image::thumbnail($filename, $size['width'], $size['height'], $this->mode, true)->save($newFilename);
+			} else {
+				Image::getImagine()->open($filename)->thumbnail(new Box($size['width'], $size['height']), $this->mode)->save($newFilename);
+			}
 		}
 	}
 
