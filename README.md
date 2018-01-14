@@ -31,9 +31,10 @@ Configuration:
         'dir'                  => '@runtime/images',
         // image sizes. If 'suffix' not set, than width and height be used for suffix name.
         'sizes'                => [
-            ['width' => 300, 'height' => 200, 'suffix' => 'md'],
-            ['width' => 150, 'height' => 150, 'suffix' => 'sm'],
-            ['width' => 200, 'height' => 50],
+           ['width' => 800, 'height' => null, 'suffix' => 'lg'], // in this case height will be calculated automatically
+	   ['width' => 300, 'height' => 200, 'suffix' => 'md'],
+	   ['width' => 300, 'height' => 100, 'suffix' => 'sm', 'mode' => 'inset', 'thumbnailBackgroundAlpha' => 0, 'fixedSize' => true],
+	   ['width' => 200, 'height' => 50], // without suffix. Not recommended.
         ],
         // handle directory recursively
         'recursively'          => true,
@@ -41,16 +42,22 @@ Configuration:
         'enableRewrite'        => true,
         // array|string the driver to use. This can be either a single driver name or an array of driver names.
         // If the latter, the first available driver will be used.
-        'driver'               => ['gd2', 'imagick', 'gmagick'],
+        'driver'               => ['gmagick', 'imagick', 'gd2'],
         // image creation mode.
         'mode'                 => 'inset',
         // enable to delete all images, which sizes not in $this->sizes array
         'deleteNonActualSizes' => false,
-        // background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
-	    // mode with both width and height specified. Default is solid.
-        'thumbnailBackgroundAlpha' => 0,
-        // whether add thumbnail box if source image less than thumbnail size.
-        'addBox' => true,
+        // background transparency to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`.
+	// If "true", background will be transparent, if "false", will be white color.
+	// Note, than jpeg images not support transparent background.
+        'bgTransparent' => false,
+        // want you to get thumbs of a fixed size or not. Has no effect, if $mode set "outbound".
+	// If "true" then thumbs will be the exact same size as in the $sizes array.
+	// The background will be filled with white color.
+	// Background transparency is controlled by the parameter $bgTransparent.
+	// If "false", then thumbs will have a proportional size. If the size of the thumbs larger than the original image,
+	// the thumbs will be the size of the original image.
+        'fixedSize' => true,
     ],
 ],
 ```
