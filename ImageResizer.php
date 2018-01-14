@@ -1,11 +1,13 @@
 <?php
+
 namespace pendalf89\imageresizer;
-use Imagine\Image\ManipulatorInterface;
+
 use Yii;
 use yii\base\Component;
+use yii\helpers\FileHelper;
+use Imagine\Image\ManipulatorInterface;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use yii\helpers\FileHelper;
 
 /**
  * Class ImageResizer
@@ -66,6 +68,7 @@ class ImageResizer extends Component
 	 * @var bool whether add thumbnail box if source image less than thumbnail size.
 	 */
 	public $addBox = true;
+
 	/**
 	 * Create work directory, if it not exists.
 	 */
@@ -76,6 +79,7 @@ class ImageResizer extends Component
 			$this->createDirectory();
 		}
 	}
+
 	/**
 	 * Resize and save thumbnails from all images.
 	 */
@@ -88,6 +92,7 @@ class ImageResizer extends Component
 			}
 		}
 	}
+
 	/**
 	 * Resize image and save thumbnails.
 	 * If rewrite disabled and thumbnail already exists, than skip.
@@ -112,6 +117,7 @@ class ImageResizer extends Component
 			Image::thumbnail($filename, $size['width'], $size['height'], $this->mode, $this->addBox)->save($newFilename);
 		}
 	}
+
 	/**
 	 * Search all thumbs by original image filename
 	 *
@@ -134,8 +140,10 @@ class ImageResizer extends Component
 				$thumbs[] = $filename;
 			}
 		}
+
 		return $thumbs;
 	}
+
 	/**
 	 * Delete original image with thumbs
 	 *
@@ -143,10 +151,11 @@ class ImageResizer extends Component
 	 */
 	public function deleteWithThumbs($original)
 	{
-		$filenames = $this->getThumbs($original);
+		$filenames   = $this->getThumbs($original);
 		$filenames[] = $original;
 		$this->deleteFiles($filenames);
 	}
+
 	/**
 	 * Add suffix to filename
 	 *
@@ -158,8 +167,10 @@ class ImageResizer extends Component
 	protected function addSuffix($filename, $suffix)
 	{
 		$pathinfo = pathinfo($filename);
+
 		return "$pathinfo[dirname]/$pathinfo[filename]$suffix.$pathinfo[extension]";
 	}
+
 	/**
 	 * Collect images filenames from dir
 	 *
@@ -186,16 +197,18 @@ class ImageResizer extends Component
 				}
 			}
 		}
+
 		return $filenames;
 	}
+
 	/**
-	 * If filename doesn`t match mask "-123x123.", than this original filename.
+	 * If filename doesn`t match mask "-123x123." or doesn`t match suffix, than this original filename.
 	 *
 	 * @param string $filename
 	 *
 	 * @return bool
 	 */
-	protected function isOriginal($filename)
+	public function isOriginal($filename)
 	{
 		if (preg_match('/-\d+x\d+\./u', $filename)) {
 			return false;
@@ -205,10 +218,13 @@ class ImageResizer extends Component
 				return false;
 			}
 		}
+
 		return true;
 	}
+
 	/**
 	 * Get suffix by size array
+	 *
 	 * @param array $size
 	 *
 	 * @return string
@@ -218,8 +234,10 @@ class ImageResizer extends Component
 		if (isset($size['suffix'])) {
 			return "-$size[suffix]";
 		}
+
 		return "-$size[width]x$size[height]";
 	}
+
 	/**
 	 * Returns work directory with images
 	 *
@@ -229,6 +247,7 @@ class ImageResizer extends Component
 	{
 		return Yii::getAlias($this->dir);
 	}
+
 	/**
 	 * Delete files.
 	 *
@@ -242,6 +261,7 @@ class ImageResizer extends Component
 			}
 		}
 	}
+
 	/**
 	 * Create directory from $this->dir property
 	 */
