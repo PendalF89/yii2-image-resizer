@@ -31,7 +31,8 @@ Configuration:
         'dir'                  => '@runtime/images',
         // image sizes. If 'suffix' not set, than width and height be used for suffix name.
         'sizes'                => [
-           ['width' => 800, 'height' => null, 'suffix' => 'lg'], // in this case height will be calculated automatically
+	   // in this case height will be calculated automatically
+           ['width' => 800, 'height' => null, 'suffix' => 'lg'],
 	   ['width' => 300, 'height' => 200, 'suffix' => 'md'],
 	   [
 		'width'                    => 300,
@@ -62,7 +63,8 @@ Configuration:
 	// If "true" then thumbs will be the exact same size as in the $sizes array.
 	// The background will be filled with white color.
 	// Background transparency is controlled by the parameter $bgTransparent.
-	// If "false", then thumbs will have a proportional size. If the size of the thumbs larger than the original image,
+	// If "false", then thumbs will have a proportional size. 
+	// If the size of the thumbs larger than the original image,
 	// the thumbs will be the size of the original image.
         'fixedSize' => true,
     ],
