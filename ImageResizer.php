@@ -5,6 +5,8 @@ use Yii;
 use yii\base\Component;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
+use yii\helpers\FileHelper;
+
 /**
  * Class ImageResizer
  * Class for creation thumbs from original image.
@@ -94,6 +96,9 @@ class ImageResizer extends Component
 	 */
 	public function resize($filename)
 	{
+		if (!self::isImage($filename)) {
+			return;
+		}
 		Image::$driver = $this->driver;
 		if ($this->deleteNonActualSizes) {
 			$this->deleteFiles($this->getThumbs($filename));
@@ -243,5 +248,18 @@ class ImageResizer extends Component
 	protected function createDirectory()
 	{
 		mkdir($this->getDirectory(), 0755, true);
+	}
+
+	/**
+	 * Checks is the file a image
+	 *
+	 * @param $filename
+	 *
+	 * @return bool
+	 * @throws \yii\base\InvalidConfigException
+	 */
+	protected static function isImage($filename)
+	{
+		return strpos(FileHelper::getMimeType($filename), 'image/') !== false;
 	}
 }
