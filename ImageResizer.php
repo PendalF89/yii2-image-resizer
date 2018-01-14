@@ -28,6 +28,7 @@ class ImageResizer extends Component
 	 *  ]
 	 *
 	 * If 'suffix' not set, than width and height be used for suffix name.
+	 * Settings in $sizes array have more priority, than class settings.
 	 */
 	public $sizes;
 
