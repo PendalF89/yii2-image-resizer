@@ -29,22 +29,28 @@ Configuration:
         'class'                => 'pendalf89\imageresizer\ImageResizer',
         // directory with images
         'dir'                  => '@runtime/images',
-        // image sizes
+        // image sizes. If 'suffix' not set, than width and height be used for suffix name.
         'sizes'                => [
-            ['width' => 300, 'height' => 200],
-            ['width' => 150, 'height' => 150],
+            ['width' => 300, 'height' => 200, 'suffix' => 'md'],
+            ['width' => 150, 'height' => 150, 'suffix' => 'sm'],
+            ['width' => 200, 'height' => 50],
         ],
         // handle directory recursively
         'recursively'          => true,
         // enable rewrite thumbs if its already exists
-        'enableRewrite'        => false,
+        'enableRewrite'        => true,
         // array|string the driver to use. This can be either a single driver name or an array of driver names.
         // If the latter, the first available driver will be used.
         'driver'               => ['gd2', 'imagick', 'gmagick'],
         // image creation mode.
-        'mode'                 => 'outbound',
+        'mode'                 => 'inset',
         // enable to delete all images, which sizes not in $this->sizes array
         'deleteNonActualSizes' => false,
+        // background alpha (transparency) to use when creating thumbnails in `ImageInterface::THUMBNAIL_INSET`
+	    // mode with both width and height specified. Default is solid.
+        'thumbnailBackgroundAlpha' => 0,
+        // whether add thumbnail box if source image less than thumbnail size.
+        'addBox' => true,
     ],
 ],
 ```
