@@ -4,6 +4,7 @@ namespace pendalf89\imageresizer;
 
 use Yii;
 use yii\base\Component;
+use yii\helpers\ArrayHelper;
 use yii\helpers\FileHelper;
 use Imagine\Image\Box;
 use Imagine\Image\ManipulatorInterface;
@@ -79,7 +80,7 @@ class ImageResizer extends Component
 	public $bgTransparent = false;
 
 	/**
-	 * @var bool want you to get thumbs of a fixed size or not. 
+	 * @var bool want you to get thumbs of a fixed size or not.
 	 * if $mode set "outbound", then $fixedSize will be ignored.
 	 * If thumb "width" or "height" is equal to "null", then $fixedSize also will be ignored.
 	 *
@@ -129,7 +130,7 @@ class ImageResizer extends Component
 		}
 		Image::$driver = $this->driver;
 		if ($this->deleteNonActualSizes) {
-			$this->deleteFiles($this->getThumbs($filename));
+			$this->deleteFiles(ArrayHelper::getColumn($this->getThumbs($filename), 'filename'));
 		}
 		foreach ($this->sizes as $size) {
 			$newFilename = $this->addSuffix($filename, $this->getSuffixBySize($size));
@@ -169,13 +170,23 @@ class ImageResizer extends Component
 	}
 
 	/**
-	 * Search all thumbs by original image filename
+	 * Search all thumbs by original image filename and return array with info about thumbs
 	 *
 	 * @param string $original original image filename
 	 *
 	 * @return array
+	 * Example:
+	 *  [
+	 *     's' => [
+	 *         'filename' => 'C:/images/test-s.png',
+	 *         'basename' => 'test-s.png',
+	 *         'width'    => 200,
+	 *         'height'   => 100,
+	 *     ],
+	 *     ...
+	 *  ]
 	 */
-	public function getThumbs($original)
+	public static function getThumbs($original)
 	{
 		$originalPathinfo = pathinfo($original);
 		$filenames        = scandir($originalPathinfo['dirname']);
@@ -187,7 +198,14 @@ class ImageResizer extends Component
 				continue;
 			}
 			if (strpos($currentPathinfo['filename'], $originalPathinfo['filename']) === 0) {
-				$thumbs[] = $filename;
+				$sizes           = getimagesize($filename);
+				$suffix          = str_replace("$originalPathinfo[filename]-", '', $currentPathinfo['filename']);
+				$thumbs[$suffix] = [
+					'filename' => $filename,
+					'basename' => $currentPathinfo['basename'],
+					'width'    => $sizes[0],
+					'height'   => $sizes[1],
+				];
 			}
 		}
 
@@ -201,7 +219,7 @@ class ImageResizer extends Component
 	 */
 	public function deleteWithThumbs($original)
 	{
-		$filenames   = $this->getThumbs($original);
+		$filenames   = ArrayHelper::getColumn($this->getThumbs($original), 'filename');
 		$filenames[] = $original;
 		$this->deleteFiles($filenames);
 	}
